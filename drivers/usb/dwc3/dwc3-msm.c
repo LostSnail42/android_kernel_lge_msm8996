@@ -99,11 +99,6 @@ static int firstboot_check = 1;
 /* AHB2PHY read/write waite value */
 #define ONE_READ_WRITE_WAIT 0x11
 
-/* force high current otg */
-static bool highcurrent_otg = 0;
-module_param(highcurrent_otg, bool, S_IRUGO|S_IWUSR);
-MODULE_PARM_DESC(highcurrent_otg, "force high current charge with otg accessory");
-
 /* cpu to fix usb interrupt */
 static int cpu_to_affin;
 module_param(cpu_to_affin, int, S_IRUGO|S_IWUSR);
@@ -3276,8 +3271,8 @@ static int dwc3_msm_power_set_property_usb(struct power_supply *psy,
 
 		switch (psy->type) {
 		case POWER_SUPPLY_TYPE_USB:
-			mdwc->chg_type = DWC3_SDP_CHARGER;
-			break;
+		        mdwc->chg_type = DWC3_SDP_CHARGER;
+ 		        break;
 		case POWER_SUPPLY_TYPE_USB_DCP:
 			mdwc->chg_type = DWC3_DCP_CHARGER;
 			break;
@@ -4502,7 +4497,8 @@ skip_psy_type:
 	}
 #endif
 
-	/* Save bc1.2 max_curr if type-c charger later moves to diff mode */
+	 
+        /* Save bc1.2 max_curr if type-c charger later moves to diff mode */
 	mdwc->bc1p2_current_max = mA;
 
 	/* Override mA if type-c charger used (use hvdcp/bc1.2 if it is 500) */
@@ -4515,27 +4511,11 @@ skip_psy_type:
 #endif
 	if (mdwc->max_power == mA)
 		return 0;
-	
-	//Set high current otg current limit 
-	if (highcurrent_otg)
-		mA = DWC3_IDEV_CHG_MAX;
+
 	
 	dev_info(mdwc->dev, "Avail curr from USB = %u\n", mA);
 	
-	//Force high current otg charging for type-c docks
-	if (highcurrent_otg) {
-				
-		/* Enable Charging */
-		if (power_supply_set_online(&mdwc->usb_psy, true))
-			goto psy_error;
-		if (power_supply_set_current_limit(&mdwc->usb_psy, 1000*mA))
-			goto psy_error;
-		
-		power_supply_changed(&mdwc->usb_psy);
-	        mdwc->max_power = mA;
-		
-	      return 0;
-	}	
+	
 	
 	if (mdwc->max_power <= 2 && mA > 2) {
 		/* Enable Charging */
